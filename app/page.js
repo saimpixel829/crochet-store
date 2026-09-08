@@ -1,29 +1,21 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
 
 export default function Home() {
   const [products, setProducts] = useState([])
   const [cart, setCart] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showCart, setShowCart] = useState(false)
   const [checkoutData, setCheckoutData] = useState({ name: '', phone: '', address: '', city: '' })
 
   const WHATSAPP_NUMBER = "923000000000" // Apna WhatsApp number yahan badlein
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  async function fetchProducts() {
-    setLoading(false)
-    // Supabase table setup na hone tak dummy data
     setProducts([
       { id: 1, name: 'Crochet Flower Bouquet', price: 1500, image: 'https://images.unsplash.com/photo-1584589167171-541ce45f1eea?w=400' },
       { id: 2, name: 'Cute Plushie Keychain', price: 850, image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400' },
       { id: 3, name: 'Handmade Crochet Bag', price: 2200, image: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400' }
     ])
-  }
+  }, [])
 
   const addToCart = (product) => {
     const existing = cart.find(item => item.id === product.id)
@@ -60,7 +52,6 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#FAF7F2', minHeight: '100vh', paddingBottom: '80px' }}>
-      {/* Header */}
       <header style={{ backgroundColor: '#fff', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
         <h1 style={{ margin: 0, fontSize: '20px', color: '#8B5E3C' }}>🧶 Crochet Store</h1>
         <button onClick={() => setShowCart(!showCart)} style={{ background: '#8B5E3C', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '20px', fontWeight: 'bold' }}>
