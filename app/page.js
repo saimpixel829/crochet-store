@@ -1,15 +1,19 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// Direct Supabase Connection (No external file needed)
+const supabaseUrl = 'YOUR_SUPABASE_URL'
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'
+const supabase = (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL') ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 export default function CrochetStore() {
-  const [view, setView] = useState('store') // 'store', 'cart', 'admin'
+  const [view, setView] = useState('store')
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [cart, setCart] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('All')
   
-  // Admin State
   const [adminAuth, setAdminAuth] = useState(false)
   const [adminPass, setAdminPass] = useState('')
   const [adminTab, setAdminTab] = useState('products')
@@ -17,7 +21,6 @@ export default function CrochetStore() {
   const [newCat, setNewCat] = useState('')
   const [newProd, setNewProd] = useState({ name: '', price: '', stock: '', image: '', description: '', category_id: '' })
 
-  // Checkout State
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '', city: '' })
   const [orderPlaced, setOrderPlaced] = useState(null)
 
@@ -48,6 +51,7 @@ export default function CrochetStore() {
 
   const handleCheckout = async (e) => {
     e.preventDefault()
+    if (!supabase) { alert('Supabase not configured'); return; }
     if (cart.length === 0) return alert('Cart is empty!')
     const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0)
     const tracking_code = 'CR-' + Math.floor(100000 + Math.random() * 900000)
@@ -73,6 +77,7 @@ export default function CrochetStore() {
 
   const handleAddProduct = async (e) => {
     e.preventDefault()
+    if (!supabase) return
     const { error } = await supabase.from('products').insert([{
       name: newProd.name,
       price: parseFloat(newProd.price),
@@ -92,7 +97,7 @@ export default function CrochetStore() {
 
   const handleAddCategory = async (e) => {
     e.preventDefault()
-    if (!newCat) return
+    if (!supabase || !newCat) return
     const { error } = await supabase.from('categories').insert([{ name: newCat }])
     if (!error) {
       alert('Category Added!')
@@ -102,17 +107,17 @@ export default function CrochetStore() {
   }
 
   const updateOrderStatus = async (id, status) => {
+    if (!supabase) return
     await supabase.from('orders').update({ status }).eq('id', id)
     loadData()
   }
 
   const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter(p => p.category_id === categories.find(c => c.name === selectedCategory)?.id)
+    : products.filter(p => p.category_id === categories.categories?.find(c => c.name === selectedCategory)?.id || p.category_id == categories.find(c => c.name === selectedCategory)?.id)
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#FAF7F2', minHeight: '100vh', paddingBottom: '40px' }}>
-      {/* Header */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: '#fff', borderBottom: '1px solid #eee' }}>
         <h1 style={{ color: '#8B5E3C', fontSize: '20px', margin: 0 }}>🧶 Crochet Boutique</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -122,10 +127,8 @@ export default function CrochetStore() {
         </div>
       </header>
 
-      {/* STORE VIEW */}
       {view === 'store' && (
         <div style={{ padding: '20px' }}>
-          {/* Categories Filter */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '5px' }}>
             <button 
               onClick={() => setSelectedCategory('All')}
@@ -144,7 +147,6 @@ export default function CrochetStore() {
             ))}
           </div>
 
-          {/* Product Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
             {filteredProducts.map(p => (
               <div key={p.id} style={{ background: '#fff', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
@@ -162,7 +164,6 @@ export default function CrochetStore() {
         </div>
       )}
 
-      {/* CART & CHECKOUT VIEW */}
       {view === 'cart' && (
         <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
           <h2>Your Shopping Cart</h2>
@@ -200,7 +201,6 @@ export default function CrochetStore() {
         </div>
       )}
 
-      {/* ADMIN VIEW */}
       {view === 'admin' && (
         <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
           {!adminAuth ? (
